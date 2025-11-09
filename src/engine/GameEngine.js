@@ -1,3 +1,6 @@
+import { Camera } from './Camera.js';
+import { Grid } from './Grid.js';
+
 /**
  * Основной класс игрового движка для изометрической 2D игры
  */
@@ -15,6 +18,24 @@ export class GameEngine {
         // Центр экрана для изометрической проекции
         this.centerX = 0;
         this.centerY = 0;
+        
+        // Камера
+        this.camera = new Camera();
+        
+        // Сетка 100x100
+        this.grid = new Grid(100, 100);
+        
+        // Устанавливаем границы камеры с запасом в 5 клеток от края сетки
+        const margin = 5;
+        this.camera.setBounds(
+            -margin,           // minX: можно выйти на 5 клеток влево
+            100 + margin,      // maxX: можно выйти на 5 клеток вправо
+            -margin,           // minY: можно выйти на 5 клеток вверх
+            100 + margin       // maxY: можно выйти на 5 клеток вниз
+        );
+        
+        // Устанавливаем камеру в центр сетки при старте
+        this.camera.setPosition(50, 50);
     }
 
     /**
@@ -74,7 +95,8 @@ export class GameEngine {
      * Обновление логики игры
      */
     update(deltaTime) {
-        // Здесь будет логика обновления игры
+        // Обновление камеры
+        this.camera.update(deltaTime);
     }
 
     /**
@@ -89,8 +111,18 @@ export class GameEngine {
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high';
 
-        // Здесь будет отрисовка изометрической графики
+        // Отрисовка сетки
+        this.grid.render(this.ctx, this.camera);
+
+        // Отладочная информация
         this.drawDebug();
+    }
+    
+    /**
+     * Получить камеру (для управления извне)
+     */
+    getCamera() {
+        return this.camera;
     }
 
     /**
@@ -103,11 +135,17 @@ export class GameEngine {
         this.ctx.fillRect(this.centerX - 2, this.centerY - 2, 4, 4);
 
         // Рисуем текст с информацией
+        const cameraPos = this.camera.getPosition();
+        const zoom = this.camera.getZoom();
+        const zoomNames = ['Далеко', 'Средне', 'Близко'];
+        
         this.ctx.fillStyle = '#00ff00';
         this.ctx.font = '16px monospace';
         this.ctx.fillText(`Canvas: ${Math.round(this.width)}x${Math.round(this.height)}`, 10, 30);
-        this.ctx.fillText(`Center: (${Math.round(this.centerX)}, ${Math.round(this.centerY)})`, 10, 50);
-        this.ctx.fillText(`DPR: ${window.devicePixelRatio || 1}`, 10, 70);
+        this.ctx.fillText(`Camera: (${Math.round(cameraPos.x)}, ${Math.round(cameraPos.y)})`, 10, 50);
+        this.ctx.fillText(`Zoom: ${zoomNames[zoom]} (${zoom})`, 10, 70);
+        this.ctx.fillText(`Grid: 100x100`, 10, 90);
+        this.ctx.fillText(`Controls: WASD/Arrows | Zoom: Mouse Wheel or [ ]`, 10, 110);
     }
 }
 

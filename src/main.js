@@ -30,6 +30,80 @@ class App {
         // Инициализируем игровой движок
         this.engine = new GameEngine(this.canvas);
         this.engine.start();
+        
+        // Настройка обработки клавиатуры и мыши
+        this.setupKeyboard();
+        this.setupMouse();
+    }
+    
+    setupKeyboard() {
+        const camera = this.engine.getCamera();
+        
+        // Маппинг клавиш на направления
+        const keyMap = {
+            // WASD
+            'KeyW': 'up',
+            'KeyS': 'down',
+            'KeyA': 'left',
+            'KeyD': 'right',
+            // Стрелки
+            'ArrowUp': 'up',
+            'ArrowDown': 'down',
+            'ArrowLeft': 'left',
+            'ArrowRight': 'right'
+        };
+        
+        // Обработчик нажатия клавиш
+        window.addEventListener('keydown', (event) => {
+            const direction = keyMap[event.code];
+            if (direction) {
+                event.preventDefault();
+                camera.setKey(direction, true);
+            }
+            
+            // Обработка масштабирования
+            if (event.code === 'BracketLeft') { // [
+                event.preventDefault();
+                camera.zoomOut();
+            } else if (event.code === 'BracketRight') { // ]
+                event.preventDefault();
+                camera.zoomIn();
+            }
+        });
+        
+        // Обработчик отпускания клавиш
+        window.addEventListener('keyup', (event) => {
+            const direction = keyMap[event.code];
+            if (direction) {
+                event.preventDefault();
+                camera.setKey(direction, false);
+            }
+        });
+        
+        // Обработка потери фокуса (отпускаем все клавиши)
+        window.addEventListener('blur', () => {
+            camera.setKey('up', false);
+            camera.setKey('down', false);
+            camera.setKey('left', false);
+            camera.setKey('right', false);
+        });
+    }
+    
+    setupMouse() {
+        const camera = this.engine.getCamera();
+        
+        // Обработка колесика мыши для масштабирования
+        this.canvas.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            
+            if (event.deltaY < 0) {
+                // Прокрутка вверх - увеличить масштаб
+                camera.zoomIn();
+            } else if (event.deltaY > 0) {
+                // Прокрутка вниз - уменьшить масштаб
+                camera.zoomOut();
+            }
+        }, { passive: false });
     }
 
     resizeCanvas() {
